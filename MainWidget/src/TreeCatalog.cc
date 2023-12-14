@@ -1,0 +1,92 @@
+#include "TreeCatalog.h"
+
+
+TreeCatalog::TreeCatalog()
+{
+}
+TreeCatalog::TreeCatalog(const TreeCatalog &cur)
+{
+    this->clear();
+    for (QMap<QString, QList<QString>*>::const_iterator it = cur.mmCatalog.constBegin(); it != cur.mmCatalog.constEnd(); ++it)
+    {
+        //delete[] this->mmCatalog[it.key()];
+        this->insert(it.key(), it.value());
+    }
+    //this->mmCatalog = cur.mmCatalog;
+}
+
+TreeCatalog& TreeCatalog::operator=(const TreeCatalog &cur)
+{
+    this->clear();
+    for (QMap<QString, QList<QString>*>::const_iterator it = cur.mmCatalog.constBegin(); it != cur.mmCatalog.constEnd(); ++it)
+    {
+        //delete[] this->mmCatalog[it.key()];
+        this->insert(it.key(), it.value());
+    }
+    return *this;
+}
+
+
+QList<QString>*& TreeCatalog::operator[](const QString topNode)
+{
+    return this->mmCatalog[topNode];
+}
+
+void TreeCatalog::insert(const QString topNode, QList<QString>* value)
+{
+    this->mmCatalog[topNode] = value;
+}
+
+void TreeCatalog::remove(const QString topNode)
+{
+    this->mmCatalog.remove(topNode);
+}
+
+QString TreeCatalog::removeSubNode(const QString parentNode, const int index)
+{
+    QString name = this->getSubNodeName(parentNode, index);
+    if (index < this->mmCatalog[parentNode]->size()) this->mmCatalog[parentNode]->removeAt(index);
+    return name;
+}
+
+QString TreeCatalog::getSubNodeName(const QString parentNode, const int index)
+{
+    if (index < this->mmCatalog[parentNode]->size())
+    {
+        return this->mmCatalog[parentNode]->at(index);
+    }
+    return QString("null");
+}
+
+QList<QString> TreeCatalog::keys()
+{
+    return this->mmCatalog.keys();
+}
+
+QList<QList<QString>*> TreeCatalog::values()
+{
+    return this->mmCatalog.values();
+}
+
+void TreeCatalog::clear()
+{
+    for (QMap<QString, QList<QString>*>::const_iterator
+        it = this->mmCatalog.constBegin();
+        it != this->mmCatalog.constEnd();
+        ++it)
+    {
+        delete[] this->mmCatalog[it.key()];
+        this->mmCatalog[it.key()] = nullptr;
+    }
+    this->mmCatalog.clear();
+}
+
+//void TreeCatalog::pushBack(const QString topNode)
+//{
+//    this->mmCatalog[topNode] = nullptr;
+//}
+
+TreeCatalog::~TreeCatalog()
+{
+    this->clear();
+}

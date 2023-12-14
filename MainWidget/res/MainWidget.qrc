@@ -1,0 +1,10 @@
+<RCC>
+  <qresource prefix="/MainWidget">
+    <file>ico/cloud.png</file>
+    <file>ico/database.png</file>
+    <file>ico/flash.png</file>
+    <file>ico/folder.png</file>
+    <file>ico/MainWidget.ico</file>
+    <file>ico/Save.png</file>
+  </qresource>
+</RCC>
