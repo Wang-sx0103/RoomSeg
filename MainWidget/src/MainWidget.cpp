@@ -1,4 +1,4 @@
-#include "MainWidget.h"
+ï»¿#include "MainWidget.h"
 
 #include <iostream>
 #include <memory>
@@ -12,8 +12,6 @@
 #include <QString>
 #include <QTreeView>
 #include <QTreeWidgetItem>
-
-
 
 #include <Windows.h>
 
@@ -55,10 +53,9 @@ void MainWidget::clickedOpenFile()
             this->mmStatusCloudShow[pathFile] = true;
             QList<QString> *fileName = new QList<QString>;
             //QSharedPointer<QList<QString>> fileName = QSharedPointer<QList<QString>>(new QList<QString>);
-            //QStringList listPath = pathFile.split("/");
             fileName->push_back(pathFile);
             this->mtreeWidget[this->path2ItemName(pathFile)] = fileName;
-        }/*else continue;*/
+        }
     }
     // refresh TreeWidget
     this->updateTreeWidget();
@@ -207,14 +204,14 @@ void MainWidget::runSemSeg()
 
 void MainWidget::initViewer(void)
 {
-    //³õÊ¼»¯VTKµÄäÖÈ¾Æ÷
+    //åˆå§‹åŒ–VTKçš„æ¸²æŸ“å™¨
     this->renderer = vtkSmartPointer<vtkRenderer>::New();
     this->renderWindow = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
     this->renderWindow->AddRenderer(renderer);
-    // ³õÊ¼»¯PCL
+    // åˆå§‹åŒ–PCL
     this->viewCloud.reset(new pcl::visualization::PCLVisualizer(renderer, renderWindow, "viewer", false));
 
-    //½«äÖÈ¾Æ÷¼ÓÈëµ½VTK´°¿ÚÖÐ
+    //å°†æ¸²æŸ“å™¨åŠ å…¥åˆ°VTKçª—å£ä¸­
     ui.qvtkWidget->setRenderWindow(this->viewCloud->getRenderWindow());
     this->viewCloud->setupInteractor(ui.qvtkWidget->interactor(), ui.qvtkWidget->renderWindow());
 }
