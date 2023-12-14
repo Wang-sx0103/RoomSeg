@@ -40,6 +40,7 @@ void TreeCatalog::insert(const QString topNode, QList<QString>* value)
 
 void TreeCatalog::remove(const QString topNode)
 {
+    //delete this->mmCatalog[topNode];
     this->mmCatalog.remove(topNode);
 }
 

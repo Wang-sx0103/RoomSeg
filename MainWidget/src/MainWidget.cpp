@@ -110,6 +110,12 @@ void MainWidget::deleteCloud()
     {
         int index = ui.treeWidget->indexOfTopLevelItem(this->passTreeWidgetItem);
         std::cout << this->passTreeWidgetItem->text(0).toStdString() << std::endl;
+        //int numChildNode = ui.treeWidget->topLevelItem(index)->childCount();
+        /*for (int indexSub = 0; indexSub < numChildNode; indexSub++)
+        {
+            QString removedName = this->mtreeWidget.removeSubNode(this->passTreeWidgetItem->text(0), indexSub);
+            this->mmStatusCloudShow.remove(removedName);
+        }*/
         this->mtreeWidget.remove(this->passTreeWidgetItem->text(0));
         //std::cout << "parent node: " << index << std::endl;
     }
@@ -263,18 +269,15 @@ void MainWidget::updateShowCloud(void)
     //this->ui.openGLWidget->getOsgViewer()->setSceneData(this->viewerRoot);
     // Show point clouds with true values in mmPathCloudStatus
     std::cout << "we will show those point-clouds: " << std::endl;
-    //for (QString pathCloud : this->mmStatusCloudShow.keys()) std::cout 
-    //    << "point cloud name: " << pathCloud.toStdString() 
-    //    << "and its status: " << this->mmStatusCloudShow[pathCloud]
-    //    << std::endl;
+
     for (QString pathCloud : this->mmStatusCloudShow.keys())
     {
         std::cout
             << "point cloud name: " << pathCloud.toStdString()
             << "and its status: " << this->mmStatusCloudShow[pathCloud]
             << std::endl;
-        QFileInfo path(pathCloud);
-        QString fileType = path.suffix();
+        QFileInfo infoFile(pathCloud);
+        QString fileType = infoFile.suffix();
         if (fileType == "pcd")
         {
 
