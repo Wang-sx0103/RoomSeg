@@ -72,11 +72,9 @@ void MainWidget::clickedOpenFile()
             itemSub->setCheckState(0, Qt::Checked);
             item->addChild(itemSub);
             ui.treeWidget->update();
-
             // show cloud
-            this->updateShowCloud(pathFile, this->mmStatusCloudShow[pathFile]);
+            this->updateShowCloud(pathFile, eShowStatus::Add);
         }
-        
     }
     // refresh TreeWidget
     //this->updateTreeWidget();
@@ -100,6 +98,7 @@ void MainWidget::changedStatusTreeWidget(QTreeWidgetItem* item, int column)
             {
                 this->mmStatusCloudShow[name] = false;
                 item->child(indexSub)->setCheckState(0, Qt::Checked);
+                this->updateShowCloud(name, eShowStatus::Hide);
             }
             else
             {
@@ -114,10 +113,11 @@ void MainWidget::changedStatusTreeWidget(QTreeWidgetItem* item, int column)
         int indexSub = ui.treeWidget->topLevelItem(index)->indexOfChild(item);
         QString name = this->mtreeWidget.getSubNodeName(item->parent()->text(0), indexSub);
         this->mmStatusCloudShow[name] = this->mmStatusCloudShow[name] == true ? false : true;
-        std::cout << "child node: " << indexSub << this->mmStatusCloudShow[name] << std::endl;
+        this->updateShowCloud(name, eShowStatus::Hide);
+        std::cout << name.toStdString() << "child node: " << indexSub << this->mmStatusCloudShow[name] << std::endl;
     }
     // Refresh display
-    this->updateShowCloud();
+    //this->updateShowCloud();
 }
 
 // right button detedtion
@@ -153,6 +153,7 @@ void MainWidget::deleteCloud()
             this->mmStatusCloudShow.remove(removedName);
             delete ui.treeWidget->topLevelItem(index)->child(numChildNode - 1);
             numChildNode = ui.treeWidget->topLevelItem(index)->childCount();
+            this->updateShowCloud(removedName, eShowStatus::Remove);
             //std::cout << "num child node: " << numChildNode << std::endl;
         }
         this->mtreeWidget.remove(this->passTreeWidgetItem->text(0));
@@ -247,8 +248,10 @@ void MainWidget::runSemSeg()
         itemSub->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsEnabled);
         itemSub->setCheckState(0, Qt::Checked);
         ui.treeWidget->topLevelItem(temp)->addChild(itemSub);
+        //this->updateShowCloud(projectCloud, eShowStatus::Add)
         ++temp;
     }
+    
     // end
     this->mlPathCloudUnpro.clear();
     std::cout << "Unprocess cloud num: " << this->mlPathCloudUnpro.size() << std::endl;
@@ -347,52 +350,55 @@ void MainWidget::updateShowCloud(void)
     }
 }
 
-void MainWidget::updateShowCloud(const QString& pathCloud, const bool statusShow)
+void MainWidget::updateShowCloud(const QString& pathCloud, const eShowStatus status)
 {
-    std::cout
-        << "point cloud name: " << pathCloud.toStdString()
-        << "and its status: " << statusShow
-        << std::endl;
-    QFileInfo infoFile(pathCloud);
-    QString fileType = infoFile.suffix();
-    if (fileType == "pcd")
+    if (status == eShowStatus::Add)
     {
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = 
-            std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
-        pcl::io::loadPCDFile(pathCloud.toStdString(), *cloud);
-        this->mlpCloud.push_back(cloud);
+        QFileInfo infoFile(pathCloud);
+        QString fileType = infoFile.suffix();
+        if (fileType == "pcd")
+        {
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud =
+                std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
+            pcl::io::loadPCDFile(pathCloud.toStdString(), *cloud);
+            this->mlpCloud.push_back(cloud);
 
+            // add cloud viewer
+            this->viewCloud->addPointCloud(cloud, pathCloud.toStdString());
+            ui.qvtkWidget->repaint();
+            //// update viewer
+            ui.qvtkWidget->update();
+            ////
+            this->viewCloud->resetCamera();
+            //this->viewCloud->updatePointCloud();
+        }
+    }
+    else if (status == eShowStatus::Show)
+    {
+        // find ptr from container
+        //ui.qvtkWidget->repaint();
+        //// add cloud viewer
+        //this->viewCloud->addPointCloud(cloud, pathCloud.toStdString());
+        //// update viewer
+        //ui.qvtkWidget->update();
+        ////
+        //this->viewCloud->resetCamera();
+    }
+    else if (status == eShowStatus::Hide)
+    {
         ui.qvtkWidget->repaint();
-        // add cloud ti viewer
-        this->viewCloud->addPointCloud(cloud, pathCloud.toStdString());
+        // add cloud viewer
+        this->viewCloud->removePointCloud(pathCloud.toStdString());
         // update viewer
         ui.qvtkWidget->update();
         //
         this->viewCloud->resetCamera();
     }
+    else
+    {
+        // delete Ptr from container
+    }
 }
-
-// 
-//void MainWidget::addFiles(QStringList& cloudFiles)
-//{
-//    for (QString file: cloudFiles)
-//    {
-//        pcl::PointCloud<pcl::PointXYZRGB>::Ptr pCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-//        QFileInfo filepath(file);
-//        QString fileType = filepath.suffix();
-//        if (fileType == "ply")
-//        {
-//            if (pcl::io::loadPLYFile<pcl::PointXYZRGB>(file.toStdString(), *pCloud) == -1) PCL_ERROR("Couldn't read file test_pcd.pcd \n");
-//            //this->viewerRoot->addChild(this->cloud2Geometry(pCloud));
-//        }
-//        else if (fileType == "pcd")
-//        {
-//            pcl::PCDReader reader;
-//            reader.read<pcl::PointXYZRGB>(file.toStdString(), *pCloud);
-//            //this->viewerRoot->addChild(this->cloud2Geometry(pCloud));
-//        }
-//    }
-//}
 
 // path to name of point cloud item
 QString MainWidget::path2ItemName(const QString& path)

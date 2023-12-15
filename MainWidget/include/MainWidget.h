@@ -39,6 +39,9 @@ private slots:
     void showboxCloudInfo();
 
 private:
+    // 
+    enum eShowStatus { Add, Show, Hide, Remove };
+
     void initViewer(void);
     QString path2ItemName(const QString&);
     //QString itemName2path(const QString&);
@@ -47,8 +50,7 @@ private:
     //bool inPathCloudRef(QString&);
     bool inTreeWidget(QString&);
     void updateShowCloud();
-    void updateShowCloud(const QString&, const bool);
-    void updateShowCloud(const QString&);
+    void updateShowCloud(const QString&, const eShowStatus);
     void updateTreeWidget();
     void clearTreeWidget();
     //osg::ref_ptr<osg::Geometry> cloud2Geometry(pcl::PointCloud<pcl::PointXYZRGB>::Ptr);
