@@ -1,4 +1,4 @@
-#include "MainWidget.h"
+ï»¿#include "MainWidget.h"
 
 #include <iostream>
 #include <memory>
@@ -18,7 +18,7 @@
 #include <Windows.h>
 
 
-MainWidget::MainWidget(QWidget *parent): QMainWindow(parent), passTreeWidgetItem(nullptr)
+MainWidget::MainWidget(QWidget* parent) : QMainWindow(parent), passTreeWidgetItem(nullptr)
 {
     ui.setupUi(this);
 
@@ -27,7 +27,7 @@ MainWidget::MainWidget(QWidget *parent): QMainWindow(parent), passTreeWidgetItem
     QObject::connect(ui.treeWidget, &QTreeWidget::itemChanged, this, &MainWidget::changedStatusTreeWidget);
     QObject::connect(ui.treeWidget, &QTreeWidget::itemPressed, this, &MainWidget::pressedClickTreeWidget);
     QObject::connect(ui.toolBarSeg, &QAction::triggered, this, &MainWidget::runSemSeg);
-    
+
     this->initViewer();
 }
 
@@ -43,8 +43,8 @@ void MainWidget::clickedOpenFile()
     fileDialog.setViewMode(QFileDialog::Detail);
     if (fileDialog.exec() == QDialog::Accepted) lPathClouds = fileDialog.selectedFiles();
     //if (this->ui.treeWidget->topLevelItemCount() > 0) this->clearTreeWidget();
-    
-    for (QString pathFile: lPathClouds)
+
+    for (QString pathFile : lPathClouds)
     {
         // check file if in mlPathCloudFilesRef
         //if (!this->inPathCloudRef(pathFile))
@@ -53,7 +53,7 @@ void MainWidget::clickedOpenFile()
             //this->mlPathCloudFilesRef.push_back(pathFile);
             this->mlPathCloudUnpro.push_back(pathFile);
             this->mmStatusCloudShow[pathFile] = true;
-            QList<QString> *fileName = new QList<QString>;
+            QList<QString>* fileName = new QList<QString>;
             //QSharedPointer<QList<QString>> fileName = QSharedPointer<QList<QString>>(new QList<QString>);
             //QStringList listPath = pathFile.split("/");
             fileName->push_back(pathFile);
@@ -170,7 +170,7 @@ void MainWidget::runSemSeg()
     const int BUFSIZE = 10;
     BOOL statusPipeFile = false;
     DWORD len = 0;
-    char buffer[BUFSIZE] = {0};
+    char buffer[BUFSIZE] = { 0 };
     //std::string recvData = "";
     QString pathCurrent = QDir::currentPath();
     std::cout << pathCurrent.toStdString() << std::endl;
@@ -190,7 +190,7 @@ void MainWidget::runSemSeg()
     DisconnectNamedPipe(hPipe);
     CloseHandle(hPipe);
 
-    for (QString projectCloud: this->mtreeWidget.keys())
+    for (QString projectCloud : this->mtreeWidget.keys())
     {
         this->mtreeWidget[projectCloud]->push_back(projectCloud);
         this->mmStatusCloudShow[projectCloud] = true;
@@ -207,22 +207,22 @@ void MainWidget::runSemSeg()
 
 void MainWidget::initViewer(void)
 {
-    //³õÊ¼»¯VTKµÄäÖÈ¾Æ÷
+    //åˆå§‹åŒ–VTKçš„æ¸²æŸ“å™¨
     this->renderer = vtkSmartPointer<vtkRenderer>::New();
     this->renderWindow = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
     this->renderWindow->AddRenderer(renderer);
-    // ³õÊ¼»¯PCL
+    // åˆå§‹åŒ–PCL
     this->viewCloud.reset(new pcl::visualization::PCLVisualizer(renderer, renderWindow, "viewer", false));
 
-    //½«äÖÈ¾Æ÷¼ÓÈëµ½VTK´°¿ÚÖÐ
+    //å°†æ¸²æŸ“å™¨åŠ å…¥åˆ°VTKçª—å£ä¸­
     ui.qvtkWidget->setRenderWindow(this->viewCloud->getRenderWindow());
     this->viewCloud->setupInteractor(ui.qvtkWidget->interactor(), ui.qvtkWidget->renderWindow());
 }
 
 // check if some file has in treewidget 
-bool MainWidget::inTreeWidget(QString &curPath)
+bool MainWidget::inTreeWidget(QString& curPath)
 {
-    for (QString projectCloud: this->mtreeWidget.keys())
+    for (QString projectCloud : this->mtreeWidget.keys())
     {
         if (curPath.compare(projectCloud) == 0) return true;
     }
@@ -238,7 +238,7 @@ void MainWidget::updateTreeWidget(void)
     to reduce unnecessary memory releases and development*/
     this->clearTreeWidget();
     ui.treeWidget->clear();
-    for (QString path: this->mtreeWidget.keys())
+    for (QString path : this->mtreeWidget.keys())
     {
         std::cout << "parent node: " << path.toStdString() << std::endl;
         QTreeWidgetItem* item = new QTreeWidgetItem();
@@ -247,7 +247,7 @@ void MainWidget::updateTreeWidget(void)
         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsEnabled);
         item->setCheckState(0, Qt::Checked);
         ui.treeWidget->addTopLevelItem(item);
-        for (QString name: *this->mtreeWidget[path])
+        for (QString name : *this->mtreeWidget[path])
         {
             std::cout << "child node: " << name.toStdString() << std::endl;
             QTreeWidgetItem* itemSub = new QTreeWidgetItem();
@@ -280,7 +280,19 @@ void MainWidget::updateShowCloud(void)
         QString fileType = path.suffix();
         if (fileType == "pcd")
         {
-
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud1(new pcl::PointCloud<pcl::PointXYZRGB>);
+            pcl::io::loadPCDFile("D:/Dataset/CloudFiltered.pcd", *cloud1);
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud2(new pcl::PointCloud<pcl::PointXYZRGB>);
+            pcl::io::loadPCDFile("D:/Dataset/DBSCAN/MapCloudClustered.pcd", *cloud2);
+            // 
+            ui.qvtkWidget->repaint();
+            //
+            this->viewCloud->addPointCloud(cloud1);
+            this->viewCloud->addPointCloud(cloud2, "D:/Dataset/DBSCAN/MapCloudClustered.pcd");
+            //
+            ui.qvtkWidget->update();
+            //
+            this->viewCloud->resetCamera();
         }
     }
 
@@ -312,8 +324,8 @@ void MainWidget::updateShowCloud(void)
 QString MainWidget::path2ItemName(const QString& path)
 {
     QStringList tmp = path.split("/");
-    QString itemName = tmp[tmp.size() - 1]+" (" + tmp[0];
-    for (int i = 1; i < tmp.size()-1; ++i) itemName += "/" + tmp[i];
+    QString itemName = tmp[tmp.size() - 1] + " (" + tmp[0];
+    for (int i = 1; i < tmp.size() - 1; ++i) itemName += "/" + tmp[i];
     return itemName += ")";
 }
 
@@ -340,18 +352,18 @@ void MainWidget::clearTreeWidget()
 {
     int numParentNode = ui.treeWidget->topLevelItemCount();
     //std::cout << "num Parent node: " << numParentNode << std::endl;
-    while (numParentNode>0)
+    while (numParentNode > 0)
     {
-        int numChildNode = ui.treeWidget->topLevelItem(numParentNode-1)->childCount();
+        int numChildNode = ui.treeWidget->topLevelItem(numParentNode - 1)->childCount();
         //std::cout << "num child node: " << numChildNode << std::endl;
-        while (numChildNode>0)
+        while (numChildNode > 0)
         {
             // have a bug!!!
-            delete ui.treeWidget->topLevelItem(numParentNode-1)->child(numChildNode-1);
+            delete ui.treeWidget->topLevelItem(numParentNode - 1)->child(numChildNode - 1);
             numChildNode = ui.treeWidget->topLevelItem(numParentNode - 1)->childCount();
             //std::cout << "num child node: " << numChildNode << std::endl;
         }
-        delete ui.treeWidget->topLevelItem(numParentNode-1);
+        delete ui.treeWidget->topLevelItem(numParentNode - 1);
         numParentNode = ui.treeWidget->topLevelItemCount();
         //std::cout << "num Parent node: " << numParentNode << std::endl;
     }
@@ -372,7 +384,7 @@ void MainWidget::clearTreeWidget()
 }
 
 MainWidget::~MainWidget()
-{ 
+{
     this->clearTreeWidget();
     delete this->passTreeWidgetItem;
 }
