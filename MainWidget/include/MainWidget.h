@@ -54,7 +54,6 @@ private:
 private:
     // ui object
     Ui::Windows ui;
-    //QString mPathCloudRaw;
  
     /* They are used for displaying point clouds
     and organizing treeWidgets */

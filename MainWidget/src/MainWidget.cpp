@@ -42,7 +42,7 @@ void MainWidget::clickedOpenFile()
     if (fileDialog.exec() == QDialog::Accepted) lPathClouds = fileDialog.selectedFiles();
     //if (this->ui.treeWidget->topLevelItemCount() > 0) this->clearTreeWidget();
 
-    for (QString pathFile : lPathClouds)
+    for (QString pathFile: lPathClouds)
     {
         // check file if in mlPathCloudFilesRef
         //if (!this->inPathCloudRef(pathFile))
@@ -51,14 +51,31 @@ void MainWidget::clickedOpenFile()
             //this->mlPathCloudFilesRef.push_back(pathFile);
             this->mlPathCloudUnpro.push_back(pathFile);
             this->mmStatusCloudShow[pathFile] = true;
-            QList<QString>* fileName = new QList<QString>;
+            QList<QString>* fileNames = new QList<QString>;
             //QSharedPointer<QList<QString>> fileName = QSharedPointer<QList<QString>>(new QList<QString>);
-            fileName->push_back(pathFile);
-            this->mtreeWidget[this->path2ItemName(pathFile)] = fileName;
+            fileNames->push_back(pathFile);
+            this->mtreeWidget[this->path2ItemName(pathFile)] = fileNames;
+
+            // add QTreeWidgetItem
+            QTreeWidgetItem* item = new QTreeWidgetItem();
+            item->setText(0, this->path2ItemName(pathFile));
+            item->setIcon(0, QIcon(":MainWidget/ico/folder.png"));
+            item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsEnabled);
+            item->setCheckState(0, Qt::Checked);
+            ui.treeWidget->addTopLevelItem(item);
+            // add QtreeWidgetItem sub
+            std::cout << "child node: " << pathFile.toStdString() << std::endl;
+            QTreeWidgetItem* itemSub = new QTreeWidgetItem();
+            itemSub->setText(0, this->path2CloudName(pathFile));
+            itemSub->setIcon(0, QIcon(":MainWidget/ico/cloud.png"));
+            itemSub->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsEnabled);
+            itemSub->setCheckState(0, Qt::Checked);
+            item->addChild(itemSub);
         }
+        ui.treeWidget->update();
     }
     // refresh TreeWidget
-    this->updateTreeWidget();
+    //this->updateTreeWidget();
     // Refresh display
     this->updateShowCloud();
 }
@@ -71,6 +88,21 @@ void MainWidget::changedStatusTreeWidget(QTreeWidgetItem* item, int column)
     {
         int index = ui.treeWidget->indexOfTopLevelItem(item);
         std::cout << "parent node: " << index << std::endl;
+        int numChildNode = ui.treeWidget->topLevelItem(index)->childCount();
+        for (int indexSub = 0; indexSub < numChildNode; ++indexSub)
+        {
+            QString name = this->mtreeWidget.getSubNodeName(item->text(0), indexSub);
+            if (item->checkState(0) == Qt::Checked)
+            {
+                this->mmStatusCloudShow[name] = false;
+                item->child(indexSub)->setCheckState(0, Qt::Checked);
+            }
+            else
+            {
+                this->mmStatusCloudShow[name] = true;
+                item->child(indexSub)->setCheckState(0, Qt::Unchecked);
+            }
+        }
     }
     else
     {
@@ -110,14 +142,19 @@ void MainWidget::deleteCloud()
     {
         int index = ui.treeWidget->indexOfTopLevelItem(this->passTreeWidgetItem);
         std::cout << this->passTreeWidgetItem->text(0).toStdString() << std::endl;
-        //int numChildNode = ui.treeWidget->topLevelItem(index)->childCount();
-        /*for (int indexSub = 0; indexSub < numChildNode; indexSub++)
+        int numChildNode = ui.treeWidget->topLevelItem(index)->childCount();
+        while (numChildNode > 0)
         {
-            QString removedName = this->mtreeWidget.removeSubNode(this->passTreeWidgetItem->text(0), indexSub);
+            QString removedName = this->mtreeWidget.removeSubNode(this->passTreeWidgetItem->text(0), numChildNode-1);
             this->mmStatusCloudShow.remove(removedName);
-        }*/
+            delete ui.treeWidget->topLevelItem(index)->child(numChildNode - 1);
+            numChildNode = ui.treeWidget->topLevelItem(index)->childCount();
+            //std::cout << "num child node: " << numChildNode << std::endl;
+        }
         this->mtreeWidget.remove(this->passTreeWidgetItem->text(0));
+        delete ui.treeWidget->topLevelItem(index);
         //std::cout << "parent node: " << index << std::endl;
+
     }
     else
     {
@@ -125,8 +162,10 @@ void MainWidget::deleteCloud()
         int indexSub = ui.treeWidget->topLevelItem(index)->indexOfChild(this->passTreeWidgetItem);
         QString removedName = this->mtreeWidget.removeSubNode(this->passTreeWidgetItem->parent()->text(0), indexSub);
         this->mmStatusCloudShow.remove(removedName);
+        delete ui.treeWidget->topLevelItem(index)->child(indexSub);
     }
-    this->updateTreeWidget();
+    ui.treeWidget->update();
+    //this->updateTreeWidget();
     this->updateShowCloud();
 }
 
@@ -157,7 +196,7 @@ void MainWidget::runSemSeg()
     this->prgBarSemSeg->setMaximum(100);
     // process pointcloud
     // 1 start Room Segmentation with other thread
-    std::thread threadRoomSeg(&MainWidget::startSeg, this);
+    /*std::thread threadRoomSeg(&MainWidget::startSeg, this);
     threadRoomSeg.join();
     // we must wait for the threadRoomSeg for a while
     Sleep(500);
@@ -191,18 +230,26 @@ void MainWidget::runSemSeg()
     //std::cout << "recv data:" << std::endl << recvData.c_str() << std::endl << std::endl;
     FlushFileBuffers(hPipe);
     DisconnectNamedPipe(hPipe);
-    CloseHandle(hPipe);
-
-    for (QString projectCloud : this->mtreeWidget.keys())
+    CloseHandle(hPipe);*/
+    int temp = 0;
+    for (QString projectCloud: this->mtreeWidget.keys())
     {
         this->mtreeWidget[projectCloud]->push_back(projectCloud);
         this->mmStatusCloudShow[projectCloud] = true;
+        // add sub QTreeWidgetItem
+        QTreeWidgetItem* itemSub = new QTreeWidgetItem();
+        itemSub->setText(0, this->path2CloudName(projectCloud));
+        itemSub->setIcon(0, QIcon(":MainWidget/ico/cloud.png"));
+        itemSub->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsEnabled);
+        itemSub->setCheckState(0, Qt::Checked);
+        ui.treeWidget->topLevelItem(temp)->addChild(itemSub);
+        ++temp;
     }
     // end
     this->mlPathCloudUnpro.clear();
     std::cout << "Unprocess cloud num: " << this->mlPathCloudUnpro.size() << std::endl;
-    this->updateTreeWidget();
-    this->updateShowCloud();
+    //this->updateTreeWidget();
+    //this->updateShowCloud();
 }
 
 
@@ -225,7 +272,7 @@ void MainWidget::initViewer(void)
 // check if some file has in treewidget 
 bool MainWidget::inTreeWidget(QString& curPath)
 {
-    for (QString projectCloud : this->mtreeWidget.keys())
+    for (QString projectCloud: this->mtreeWidget.keys())
     {
         if (curPath.compare(projectCloud) == 0) return true;
     }
@@ -240,7 +287,6 @@ void MainWidget::updateTreeWidget(void)
     /*Afterwards, we will set up detailed update strategies
     to reduce unnecessary memory releases and development*/
     this->clearTreeWidget();
-    ui.treeWidget->clear();
     for (QString path : this->mtreeWidget.keys())
     {
         std::cout << "parent node: " << path.toStdString() << std::endl;
@@ -284,7 +330,7 @@ void MainWidget::updateShowCloud(void)
             pcl::io::loadPCDFile("D:/Dataset/CloudFiltered.pcd", *cloud1);
             pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud2(new pcl::PointCloud<pcl::PointXYZRGB>);
             pcl::io::loadPCDFile("D:/Dataset/DBSCAN/MapCloudClustered.pcd", *cloud2);
-            // 
+            //
             ui.qvtkWidget->repaint();
             //
             this->viewCloud->addPointCloud(cloud1);
@@ -386,5 +432,5 @@ void MainWidget::clearTreeWidget()
 MainWidget::~MainWidget()
 {
     this->clearTreeWidget();
-    delete this->passTreeWidgetItem;
+    //delete this->passTreeWidgetItem;
 }
