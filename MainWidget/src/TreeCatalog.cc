@@ -1,5 +1,6 @@
 #include "TreeCatalog.h"
 
+#include <iostream>
 
 TreeCatalog::TreeCatalog()
 {
@@ -39,6 +40,7 @@ void TreeCatalog::insert(const QString topNode, QList<QString>* value)
 
 void TreeCatalog::remove(const QString topNode)
 {
+    //delete this->mmCatalog[topNode];
     this->mmCatalog.remove(topNode);
 }
 
@@ -70,12 +72,15 @@ QList<QList<QString>*> TreeCatalog::values()
 
 void TreeCatalog::clear()
 {
-    for (QMap<QString, QList<QString>*>::const_iterator
-        it = this->mmCatalog.constBegin();
-        it != this->mmCatalog.constEnd();
-        ++it)
+    QMap<QString, QList<QString>*>::iterator it;
+    for (it = this->mmCatalog.begin();
+         it != this->mmCatalog.end();
+         ++it)
     {
-        delete[] this->mmCatalog[it.key()];
+        //std::cout << it.key().toStdString() << std::endl;
+        //std::cout << (*it.value())[0].toStdString() << std::endl;
+        // is error: delete[] it.value();
+        delete it.value();
         this->mmCatalog[it.key()] = nullptr;
     }
     this->mmCatalog.clear();
