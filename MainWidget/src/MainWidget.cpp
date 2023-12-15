@@ -71,13 +71,17 @@ void MainWidget::clickedOpenFile()
             itemSub->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsEnabled);
             itemSub->setCheckState(0, Qt::Checked);
             item->addChild(itemSub);
+            ui.treeWidget->update();
+
+            // show cloud
+            this->updateShowCloud(pathFile, this->mmStatusCloudShow[pathFile]);
         }
-        ui.treeWidget->update();
+        
     }
     // refresh TreeWidget
     //this->updateTreeWidget();
     // Refresh display
-    this->updateShowCloud();
+    //this->updateShowCloud();
 }
 
 // detection of changes in tree widget item
@@ -341,7 +345,31 @@ void MainWidget::updateShowCloud(void)
             this->viewCloud->resetCamera();
         }
     }
+}
 
+void MainWidget::updateShowCloud(const QString& pathCloud, const bool statusShow)
+{
+    std::cout
+        << "point cloud name: " << pathCloud.toStdString()
+        << "and its status: " << statusShow
+        << std::endl;
+    QFileInfo infoFile(pathCloud);
+    QString fileType = infoFile.suffix();
+    if (fileType == "pcd")
+    {
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = 
+            std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
+        pcl::io::loadPCDFile(pathCloud.toStdString(), *cloud);
+        this->mlpCloud.push_back(cloud);
+
+        ui.qvtkWidget->repaint();
+        // add cloud ti viewer
+        this->viewCloud->addPointCloud(cloud, pathCloud.toStdString());
+        // update viewer
+        ui.qvtkWidget->update();
+        //
+        this->viewCloud->resetCamera();
+    }
 }
 
 // 

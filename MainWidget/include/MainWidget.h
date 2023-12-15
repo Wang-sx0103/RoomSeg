@@ -47,6 +47,8 @@ private:
     //bool inPathCloudRef(QString&);
     bool inTreeWidget(QString&);
     void updateShowCloud();
+    void updateShowCloud(const QString&, const bool);
+    void updateShowCloud(const QString&);
     void updateTreeWidget();
     void clearTreeWidget();
     //osg::ref_ptr<osg::Geometry> cloud2Geometry(pcl::PointCloud<pcl::PointXYZRGB>::Ptr);
@@ -61,6 +63,9 @@ private:
     QStringList mlPathCloudUnpro;
     // Status of displayed point cloud
     QMap<QString, bool> mmStatusCloudShow;
+    // Cloud Pointer
+    QList<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> mlpCloud;
+
     // organizational treeWidget structure
     TreeCatalog mtreeWidget;
 
@@ -69,9 +74,6 @@ private:
 
     // show Semantic segmentation progress
     QSharedPointer<QProgressBar> prgBarSemSeg;
-
-    // a flag about whether point clouds are processed
-    //bool mbUnproCloud;
 
     // renderer
     vtkSmartPointer<vtkRenderer> renderer;
