@@ -119,6 +119,7 @@
     <QtRcc Include="res\MainWidget.qrc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\Cloud.hpp" />
     <ClInclude Include="include\TreeCatalog.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

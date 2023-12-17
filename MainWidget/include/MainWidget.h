@@ -1,9 +1,11 @@
 #pragma once
 
-#include "TreeCatalog.h"
 #include "ui_MainWidget.h"
+#include "TreeCatalog.h"
+#include "Cloud.hpp"
 
 #include <memory>
+#include <any>
 
 #include <QList>
 #include <QMap>
@@ -32,7 +34,7 @@ public:
 
 private slots:
     void clickedOpenFile();
-    void changedStatusTreeWidget(QTreeWidgetItem*, int);
+    void clickedStatusTreeWidgetItem(QTreeWidgetItem*, int);
     void pressedClickTreeWidget(QTreeWidgetItem*, int);
     void runSemSeg();
     void deleteCloud();
@@ -53,7 +55,9 @@ private:
     void updateShowCloud(const QString&, const eShowStatus);
     void updateTreeWidget();
     void clearTreeWidget();
-    //osg::ref_ptr<osg::Geometry> cloud2Geometry(pcl::PointCloud<pcl::PointXYZRGB>::Ptr);
+
+    // get point cloud field info
+    const std::string getFieldType(const std::vector<pcl::PCLPointField>&);
 
 private:
     // ui object
@@ -66,7 +70,8 @@ private:
     // Status of displayed point cloud
     QMap<QString, bool> mmStatusCloudShow;
     // Cloud Pointer
-    QList<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> mlpCloud;
+    //QList<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> mlpCloud;
+    QList<std::any> mlCloud;
 
     // organizational treeWidget structure
     TreeCatalog mtreeWidget;

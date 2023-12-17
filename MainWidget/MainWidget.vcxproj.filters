@@ -55,5 +55,8 @@
     <ClInclude Include="include\TreeCatalog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\Cloud.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

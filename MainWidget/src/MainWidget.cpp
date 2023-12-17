@@ -13,6 +13,8 @@
 #include <QTreeView>
 #include <QTreeWidgetItem>
 
+#include <pcl/PCLPointCloud2.h>
+
 #include <Windows.h>
 
 
@@ -22,7 +24,7 @@ MainWidget::MainWidget(QWidget* parent) : QMainWindow(parent), passTreeWidgetIte
 
     QObject::connect(ui.fileOpenFile, &QAction::triggered, this, &MainWidget::clickedOpenFile);
     QObject::connect(ui.toolBarOpenFile, &QAction::triggered, this, &MainWidget::clickedOpenFile);
-    QObject::connect(ui.treeWidget, &QTreeWidget::itemChanged, this, &MainWidget::changedStatusTreeWidget);
+    QObject::connect(ui.treeWidget, &QTreeWidget::itemChanged, this, &MainWidget::clickedStatusTreeWidgetItem);
     QObject::connect(ui.treeWidget, &QTreeWidget::itemPressed, this, &MainWidget::pressedClickTreeWidget);
     QObject::connect(ui.toolBarSeg, &QAction::triggered, this, &MainWidget::runSemSeg);
 
@@ -60,7 +62,7 @@ void MainWidget::clickedOpenFile()
             QTreeWidgetItem* item = new QTreeWidgetItem();
             item->setText(0, this->path2ItemName(pathFile));
             item->setIcon(0, QIcon(":MainWidget/ico/folder.png"));
-            item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsEnabled);
+            item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
             item->setCheckState(0, Qt::Checked);
             ui.treeWidget->addTopLevelItem(item);
             // add QtreeWidgetItem sub
@@ -68,7 +70,7 @@ void MainWidget::clickedOpenFile()
             QTreeWidgetItem* itemSub = new QTreeWidgetItem();
             itemSub->setText(0, this->path2CloudName(pathFile));
             itemSub->setIcon(0, QIcon(":MainWidget/ico/cloud.png"));
-            itemSub->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsEnabled);
+            itemSub->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
             itemSub->setCheckState(0, Qt::Checked);
             item->addChild(itemSub);
             ui.treeWidget->update();
@@ -83,8 +85,9 @@ void MainWidget::clickedOpenFile()
 }
 
 // detection of changes in tree widget item
-void MainWidget::changedStatusTreeWidget(QTreeWidgetItem* item, int column)
+void MainWidget::clickedStatusTreeWidgetItem(QTreeWidgetItem* item, int column)
 {
+    bool flag = true;
     //std::cout << "My column is: " << column << std::endl;
     if (item->parent() == nullptr)
     {
@@ -93,28 +96,49 @@ void MainWidget::changedStatusTreeWidget(QTreeWidgetItem* item, int column)
         int numChildNode = ui.treeWidget->topLevelItem(index)->childCount();
         for (int indexSub = 0; indexSub < numChildNode; ++indexSub)
         {
-            QString name = this->mtreeWidget.getSubNodeName(item->text(0), indexSub);
-            if (item->checkState(0) == Qt::Checked)
+            QString name = this->mtreeWidget.getSubNodeName(item->text(column), indexSub);
+            if (item->checkState(column) == Qt::Checked)
             {
-                this->mmStatusCloudShow[name] = false;
-                item->child(indexSub)->setCheckState(0, Qt::Checked);
-                this->updateShowCloud(name, eShowStatus::Hide);
+                this->mmStatusCloudShow[name] = true;
+                this->updateShowCloud(name, eShowStatus::Show);
+                std::cout << "parents Show" << std::endl;
+                flag = false;
+                std::cout << "flag: " << flag << std::endl;
             }
             else
             {
-                this->mmStatusCloudShow[name] = true;
-                item->child(indexSub)->setCheckState(0, Qt::Unchecked);
+                this->mmStatusCloudShow[name] = false;
+                this->updateShowCloud(name, eShowStatus::Hide);
+                std::cout << "parents Hide" << std::endl;
+                flag = false;
+                std::cout << "flag: " << flag << std::endl;
+                /*item->child(indexSub)->setCheckState(column, Qt::Unchecked);*/
             }
         }
     }
     else
     {
+        std::cout << "Header" << std::endl;
         int index = ui.treeWidget->indexOfTopLevelItem(item->parent());
         int indexSub = ui.treeWidget->topLevelItem(index)->indexOfChild(item);
-        QString name = this->mtreeWidget.getSubNodeName(item->parent()->text(0), indexSub);
-        this->mmStatusCloudShow[name] = this->mmStatusCloudShow[name] == true ? false : true;
-        this->updateShowCloud(name, eShowStatus::Hide);
-        std::cout << name.toStdString() << "child node: " << indexSub << this->mmStatusCloudShow[name] << std::endl;
+        QString name = this->mtreeWidget.getSubNodeName(item->parent()->text(column), indexSub);
+        if (this->mmStatusCloudShow[name] == true && flag == true)
+        {
+            std::cout << "+ sub Hide" << std::endl;
+            this->mmStatusCloudShow[name] = false;
+            this->updateShowCloud(name, eShowStatus::Hide);
+            std::cout << "sub Hide" << std::endl;
+        }
+        else if (this->mmStatusCloudShow[name] == false && flag == true)
+        {
+            std::cout << " + sub Show" << std::endl;
+            this->mmStatusCloudShow[name] = true;
+            this->updateShowCloud(name, eShowStatus::Show);
+            std::cout << "sub Show" << std::endl;
+        }
+        //this->mmStatusCloudShow[name] = this->mmStatusCloudShow[name] == true ? false : true;
+        //this->updateShowCloud(name, eShowStatus::Hide);
+        std::cout << name.toStdString() << " child node: " << indexSub << " * " << this->mmStatusCloudShow[name] << std::endl;
     }
     // Refresh display
     //this->updateShowCloud();
@@ -159,7 +183,6 @@ void MainWidget::deleteCloud()
         this->mtreeWidget.remove(this->passTreeWidgetItem->text(0));
         delete ui.treeWidget->topLevelItem(index);
         //std::cout << "parent node: " << index << std::endl;
-
     }
     else
     {
@@ -352,37 +375,79 @@ void MainWidget::updateShowCloud(void)
 
 void MainWidget::updateShowCloud(const QString& pathCloud, const eShowStatus status)
 {
-    if (status == eShowStatus::Add)
+    if (status == eShowStatus::Add || status == eShowStatus::Show)
     {
         QFileInfo infoFile(pathCloud);
         QString fileType = infoFile.suffix();
         if (fileType == "pcd")
         {
-            pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud =
-                std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
-            pcl::io::loadPCDFile(pathCloud.toStdString(), *cloud);
-            this->mlpCloud.push_back(cloud);
+            pcl::PCDReader reader;
+            pcl::PCLPointCloud2::Ptr cloud = std::make_shared<pcl::PCLPointCloud2>();
+            reader.readHeader(pathCloud.toStdString(), *cloud);
+            if (this->getFieldType(cloud->fields) == std::string("xyzrgb")||
+                this->getFieldType(cloud->fields) == std::string("rgbxyz"))
+            {
+                pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudXYZRGB =
+                    std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
+                reader.read(pathCloud.toStdString(), *cloudXYZRGB);
 
-            // add cloud viewer
-            this->viewCloud->addPointCloud(cloud, pathCloud.toStdString());
-            ui.qvtkWidget->repaint();
-            //// update viewer
-            ui.qvtkWidget->update();
-            ////
-            this->viewCloud->resetCamera();
-            //this->viewCloud->updatePointCloud();
+                Cloud<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud(pathCloud.toStdString());
+                cloud.setCloudPtr(cloudXYZRGB);
+                this->mlCloud.push_back(cloud);
+
+                // show
+                this->viewCloud->addPointCloud(cloud.getCloudPtr(), pathCloud.toStdString());
+                //ui.qvtkWidget->repaint();
+                //// update viewer
+                ui.qvtkWidget->update();
+                ////
+                this->viewCloud->resetCamera();
+                ui.qvtkWidget->repaint();
+                ui.qvtkWidget->update();
+            }
+            else if (this->getFieldType(cloud->fields) == std::string("xyzrgba") ||
+                     this->getFieldType(cloud->fields) == std::string("xyzrgbalabel"))
+            {
+                pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloudXYZRGBA =
+                    std::make_shared<pcl::PointCloud<pcl::PointXYZRGBA>>();
+                reader.read(pathCloud.toStdString(), *cloudXYZRGBA);
+                Cloud<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> cloud(pathCloud.toStdString());
+                cloud.setCloudPtr(cloudXYZRGBA);
+                this->mlCloud.push_back(cloud);
+
+                // show
+                this->viewCloud->addPointCloud(cloud.getCloudPtr(), pathCloud.toStdString());
+                //ui.qvtkWidget->repaint();
+                ////
+                this->viewCloud->resetCamera();
+                ui.qvtkWidget->repaint();
+                ui.qvtkWidget->update();
+            }
+        }
+        else if (fileType == "ply")
+        {
+            pcl::PLYReader reader;
         }
     }
     else if (status == eShowStatus::Show)
     {
-        // find ptr from container
-        //ui.qvtkWidget->repaint();
-        //// add cloud viewer
-        //this->viewCloud->addPointCloud(cloud, pathCloud.toStdString());
-        //// update viewer
-        //ui.qvtkWidget->update();
-        ////
-        //this->viewCloud->resetCamera();
+        /*for (const auto& cloud: this->mlCloud)
+        {
+            if (cloud.getName() == pathCloud.toStdString())
+            {}
+        }*/
+        //for (int i = 0; i < this->mlCloud.size(); ++i)
+        //{
+            //this->mlCloud[i].getName() == pathCloud.toStdString();
+            //// show
+            //this->viewCloud->addPointCloud(mlCloud[i].getCloudPtr(), pathCloud.toStdString());
+            ////ui.qvtkWidget->repaint();
+            ////// update viewer
+            //ui.qvtkWidget->update();
+            //////
+            //this->viewCloud->resetCamera();
+            //ui.qvtkWidget->repaint();
+        //}
     }
     else if (status == eShowStatus::Hide)
     {
@@ -461,6 +526,14 @@ void MainWidget::clearTreeWidget()
     //    delete *itTopNode;
     //    //++itTopNode;
     //}
+}
+
+const std::string MainWidget::getFieldType(const std::vector<pcl::PCLPointField>& field)
+{
+    std::string temp;
+    for (int i = 0; i < field.size(); ++i)
+        if (!(field[i].name == std::string("_"))) temp += field[i].name;
+    return temp;
 }
 
 MainWidget::~MainWidget()
