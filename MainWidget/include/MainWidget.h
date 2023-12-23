@@ -1,3 +1,10 @@
+/*****************************************************************//**
+ * \file   MainWidget.h
+ * \brief  
+ * 
+ * \author AlexW
+ * \date   December 2023
+ *********************************************************************/
 #pragma once
 
 #include "ui_MainWidget.h"
@@ -24,7 +31,7 @@
 #include <pcl/point_types.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
-class MainWidget : public QMainWindow
+class MainWidget: public QMainWindow
 {
     Q_OBJECT
 
@@ -46,16 +53,12 @@ private:
 
     void initViewer(void);
     QString path2ItemName(const QString&);
-    //QString itemName2path(const QString&);
     QString path2CloudName(const QString);
     void startSeg();
-    //bool inPathCloudRef(QString&);
     bool inTreeWidget(QString&);
-    void updateShowCloud();
     void updateShowCloud(const QString&, const eShowStatus);
-    void updateTreeWidget();
+    //void updateTreeWidget();
     void clearTreeWidget();
-
     // get point cloud field info
     const std::string getFieldType(const std::vector<pcl::PCLPointField>&);
 
@@ -67,11 +70,8 @@ private:
     and organizing treeWidgets */
     // Path of unprocessed point clouds
     QStringList mlPathCloudUnpro;
-    // Status of displayed point cloud
-    QMap<QString, bool> mmStatusCloudShow;
     // Cloud Pointer
-    //QList<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> mlpCloud;
-    QList<std::any> mlCloud;
+    QMap<QString, std::any> mmCloud;
 
     // organizational treeWidget structure
     TreeCatalog mtreeWidget;
@@ -82,9 +82,13 @@ private:
     // show Semantic segmentation progress
     QSharedPointer<QProgressBar> prgBarSemSeg;
 
-    // renderer
+    // current dir
+    QString mDirCurrent;
+
+    // from VTK renderer for PCL
     vtkSmartPointer<vtkRenderer> renderer;
     vtkSmartPointer<vtkGenericOpenGLRenderWindow> renderWindow;
+
     // show point cloud by PCL
     pcl::visualization::PCLVisualizer::Ptr viewCloud;
 };

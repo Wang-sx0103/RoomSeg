@@ -1,3 +1,10 @@
+/*****************************************************************//**
+ * \file   TreeCatalog.cc
+ * \brief  
+ * 
+ * \author AlexW
+ * \date   December 2023
+ *********************************************************************/
 #include "TreeCatalog.h"
 
 #include <iostream>
@@ -27,7 +34,10 @@ TreeCatalog& TreeCatalog::operator=(const TreeCatalog &cur)
     return *this;
 }
 
-
+/**
+* \brief
+* \param[in]
+*/
 QList<QString>*& TreeCatalog::operator[](const QString topNode)
 {
     return this->mmCatalog[topNode];

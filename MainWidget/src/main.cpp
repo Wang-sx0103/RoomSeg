@@ -1,3 +1,10 @@
+/*****************************************************************//**
+ * \file   main.cpp
+ * \brief  
+ * 
+ * \author AlexW
+ * \date   December 2023
+ *********************************************************************/
 #include "MainWidget.h"
 #include <QtWidgets/QApplication>
 
