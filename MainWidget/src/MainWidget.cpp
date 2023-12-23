@@ -69,9 +69,8 @@ void MainWidget::clickedOpenFile()
             item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
             item->setCheckState(0, Qt::Checked);
             ui.treeWidget->addTopLevelItem(item);
-            
+
             // add sub QtreeWidgetItem to parent
-            std::cout << "child node: " << pathFile.toStdString() << std::endl;
             QTreeWidgetItem* itemSub = new QTreeWidgetItem();
             itemSub->setText(0, this->path2CloudName(pathFile));
             itemSub->setIcon(0, QIcon(":MainWidget/ico/cloud.png"));
@@ -79,7 +78,7 @@ void MainWidget::clickedOpenFile()
             itemSub->setCheckState(0, Qt::Checked);
             item->addChild(itemSub);
             ui.treeWidget->update();
-            
+
             // show cloud
             this->updateShowCloud(pathFile, eShowStatus::Add);
         }
@@ -94,7 +93,6 @@ void MainWidget::clickedOpenFile()
  */
 void MainWidget::clickedStatusTreeWidgetItem(QTreeWidgetItem* item, int column)
 {
-    //std::cout << "My column is: " << column << std::endl;
     if (item->parent() == nullptr)
     {
         int index = ui.treeWidget->indexOfTopLevelItem(item);
@@ -440,6 +438,7 @@ void MainWidget::updateShowCloud(const QString& pathCloud, const eShowStatus sta
         this->viewCloud->getRenderWindow()->Render();
 
         // delete Ptr from container
+
     }
 }
 
