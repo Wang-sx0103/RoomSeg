@@ -52,8 +52,10 @@ private:
     enum eShowStatus { Add, Show, Hide, Remove };
 
     void initViewer(void);
-    QString path2ItemName(const QString&);
-    QString path2CloudName(const QString);
+    const QString path2ItemName(const QString&);
+    const QString path2CloudName(const QString&);
+    const QString path2PathSeg(const QString&);
+    const QString path2PathTran(const QString&);
     void startSeg();
     bool inTreeWidget(QString&);
     void updateShowCloud(const QString&, const eShowStatus);

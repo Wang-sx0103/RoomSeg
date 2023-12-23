@@ -38,30 +38,30 @@ TreeCatalog& TreeCatalog::operator=(const TreeCatalog &cur)
 * \brief
 * \param[in]
 */
-QList<QString>*& TreeCatalog::operator[](const QString topNode)
+QList<QString>*& TreeCatalog::operator[](const QString& topNode)
 {
     return this->mmCatalog[topNode];
 }
 
-void TreeCatalog::insert(const QString topNode, QList<QString>* value)
+void TreeCatalog::insert(const QString& topNode, QList<QString>* value)
 {
     this->mmCatalog[topNode] = value;
 }
 
-void TreeCatalog::remove(const QString topNode)
+void TreeCatalog::remove(const QString& topNode)
 {
     //delete this->mmCatalog[topNode];
     this->mmCatalog.remove(topNode);
 }
 
-QString TreeCatalog::removeSubNode(const QString parentNode, const int index)
+QString TreeCatalog::removeSubNode(const QString& parentNode, const int index)
 {
     QString name = this->getSubNodeName(parentNode, index);
     if (index < this->mmCatalog[parentNode]->size()) this->mmCatalog[parentNode]->removeAt(index);
     return name;
 }
 
-QString TreeCatalog::getSubNodeName(const QString parentNode, const int index)
+QString TreeCatalog::getSubNodeName(const QString& parentNode, const int index)
 {
     if (index < this->mmCatalog[parentNode]->size())
     {
@@ -78,6 +78,17 @@ QList<QString> TreeCatalog::keys()
 QList<QList<QString>*> TreeCatalog::values()
 {
     return this->mmCatalog.values();
+}
+
+int TreeCatalog::getKeyIndex(const QString& parentNode)
+{
+    int counter = 0;
+    for (QString key: this->mmCatalog.keys())
+    {
+        if (key.compare(parentNode) == 0) return counter;
+        ++counter;
+    }
+    return 0;
 }
 
 void TreeCatalog::clear()

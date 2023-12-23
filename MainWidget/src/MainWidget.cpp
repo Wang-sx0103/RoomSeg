@@ -47,7 +47,7 @@ void MainWidget::clickedOpenFile()
     QStringList lPathClouds;
     // open dialog
     QFileDialog fileDialog = QFileDialog(this, QString("Open files"), QString(""),
-        QString("ASCII cloud(*.txt *.asc *.neu *.xyz *,pts *.csv);;PLY mesh(*.ply);;Point Cloud Library cloud(*.pcd);;All(*.*)"));
+        QString("Point Cloud Library cloud(*.pcd);;ASCII cloud(*.txt *.asc *.neu *.xyz *,pts *.csv);;PLY mesh(*.ply);;All(*.*)"));
     fileDialog.setFileMode(QFileDialog::ExistingFiles);
     fileDialog.setViewMode(QFileDialog::Detail);
     if (fileDialog.exec() == QDialog::Accepted) lPathClouds = fileDialog.selectedFiles();
@@ -79,7 +79,7 @@ void MainWidget::clickedOpenFile()
             item->addChild(itemSub);
             ui.treeWidget->update();
 
-            // show cloud
+            // update show cloud
             this->updateShowCloud(pathFile, eShowStatus::Add);
         }
     }
@@ -206,7 +206,6 @@ void MainWidget::showboxCloudInfo()
 void MainWidget::runSemSeg()
 {
     if (this->mlPathCloudUnpro.size() == 0) return;
-    /*if (this->mbUnproCloud || this->mPathCloudFiles.size() == 0) return;*/
     // progress bar
     this->prgBarSemSeg = QSharedPointer<QProgressBar>(new QProgressBar(this));
     ui.statusBar->addPermanentWidget(this->prgBarSemSeg.get(), 1);
@@ -217,8 +216,9 @@ void MainWidget::runSemSeg()
     this->prgBarSemSeg->setMaximum(100);
 
     this->mDirCurrent = QDir::currentPath();
-
-    // process pointcloud
+    std::cout << this->mDirCurrent.toStdString() << std::endl;
+    this->startSeg();
+    /*// process pointcloud
     // 1 start Room Segmentation with other thread
     std::thread threadRoomSeg(&MainWidget::startSeg, this);
     threadRoomSeg.join();
@@ -237,43 +237,35 @@ void MainWidget::runSemSeg()
     BOOL statusPipeFile = false;
     DWORD len = 0;
     char buffer[BUFSIZE] = { 0 };
-    //std::string recvData = "";
-    //QString pathCurrent = QDir::currentPath();
-    //std::cout << pathCurrent.toStdString() << std::endl;
     while (true)
     {
         statusPipeFile = ReadFile(hPipe, buffer, BUFSIZE * sizeof(char), &len, NULL);
         if (!statusPipeFile) break;
 
-        //memcpy(buffer2, buffer, len);
         std::cout << "data: " << buffer << std::endl;
         this->prgBarSemSeg->setValue(atof(buffer));
-        //this->updateTreeWidget(QString("hello"));
-        //recvData.append(buffer2);
     }
-    //std::cout << "recv data:" << std::endl << recvData.c_str() << std::endl << std::endl;
+    // 3 close pipe
     FlushFileBuffers(hPipe);
     DisconnectNamedPipe(hPipe);
-    CloseHandle(hPipe);
-    int temp = 0;
-    for (QString projectCloud: this->mtreeWidget.keys())
-    {
-        this->mtreeWidget[projectCloud]->push_back(projectCloud);
-        //this->mmStatusCloudShow[projectCloud] = true;
-        // add sub QTreeWidgetItem
-        QTreeWidgetItem* itemSub = new QTreeWidgetItem();
-        itemSub->setText(0, this->path2CloudName(projectCloud));
-        itemSub->setIcon(0, QIcon(":MainWidget/ico/cloud.png"));
-        itemSub->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsEnabled);
-        itemSub->setCheckState(0, Qt::Checked);
-        ui.treeWidget->topLevelItem(temp)->addChild(itemSub);
-        //this->updateShowCloud(projectCloud, eShowStatus::Add)
-        ++temp;
-    }
+    //CloseHandle(hPipe);*/
 
+    // add the segmented PointCloud to the Treewidget
+    for (QString pathFile: this->mlPathCloudUnpro)
+    {
+        // add to mtreeWidget
+        QString pathFileSeg = this->path2PathSeg(pathFile);
+        this->mtreeWidget[this->path2ItemName(pathFile)]->push_back(pathFileSeg);
+        // add to treeWidget
+        QTreeWidgetItem* itemSub = new QTreeWidgetItem();
+        itemSub->setText(0, this->path2CloudName(pathFileSeg));
+        itemSub->setIcon(0, QIcon(":MainWidget/ico/cloud.png"));
+        itemSub->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+        itemSub->setCheckState(0, Qt::Checked);
+        ui.treeWidget->topLevelItem(this->mtreeWidget.getKeyIndex(this->path2ItemName(pathFile)))->addChild(itemSub);
+    }
     // end
     this->mlPathCloudUnpro.clear();
-    std::cout << "Unprocess cloud num: " << this->mlPathCloudUnpro.size() << std::endl;
 }
 
 
@@ -407,18 +399,18 @@ void MainWidget::updateShowCloud(const QString& pathCloud, const eShowStatus sta
             //ui.qvtkWidget->repaint();
             //ui.qvtkWidget->update();
         }
-        else if (this->mmCloud[pathCloud].type() == typeid(Cloud<pcl::PointCloud<pcl::PointXYZ>::Ptr>))
+        else if (this->mmCloud[pathCloud].type() == typeid(Cloud<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr>))
         {
-            Cloud<pcl::PointCloud<pcl::PointXYZ>::Ptr> cloud =
-                std::any_cast<const Cloud<pcl::PointCloud<pcl::PointXYZ>::Ptr>&>(this->mmCloud[pathCloud]);
+            Cloud<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> cloud =
+                std::any_cast<const Cloud<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr>&>(this->mmCloud[pathCloud]);
             this->viewCloud->addPointCloud(cloud.getCloudPtr(), pathCloud.toStdString());
             this->viewCloud->resetCamera();
             this->viewCloud->getRenderWindow()->Render();
         }
-        else if (this->mmCloud[pathCloud].type() == typeid(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr))
+        else if (this->mmCloud[pathCloud].type() == typeid(Cloud<pcl::PointCloud<pcl::PointXYZ>::Ptr>))
         {
-            Cloud<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> cloud =
-                std::any_cast<const Cloud<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr>&>(this->mmCloud[pathCloud]);
+            Cloud<pcl::PointCloud<pcl::PointXYZ>::Ptr> cloud =
+                std::any_cast<const Cloud<pcl::PointCloud<pcl::PointXYZ>::Ptr>&>(this->mmCloud[pathCloud]);
             this->viewCloud->addPointCloud(cloud.getCloudPtr(), pathCloud.toStdString());
             this->viewCloud->resetCamera();
             this->viewCloud->getRenderWindow()->Render();
@@ -448,7 +440,7 @@ void MainWidget::updateShowCloud(const QString& pathCloud, const eShowStatus sta
  * \param path
  * \return 
  */
-QString MainWidget::path2ItemName(const QString& path)
+const QString MainWidget::path2ItemName(const QString& path)
 {
     QStringList tmp = path.split("/");
     QString itemName = tmp[tmp.size() - 1] + " (" + tmp[0];
@@ -462,10 +454,41 @@ QString MainWidget::path2ItemName(const QString& path)
  * \param pathCloud
  * \return 
  */
-QString MainWidget::path2CloudName(const QString pathCloud)
+const QString MainWidget::path2CloudName(const QString& pathCloud)
 {
     QStringList listPathCloud = pathCloud.split("/");
     return listPathCloud[listPathCloud.size() - 1].split(".")[0];
+}
+
+/**
+ * \brief .
+ * 
+ * \param path
+ * \return 
+ */
+const QString MainWidget::path2PathSeg(const QString& path)
+{
+    QStringList tmps = path.split(".");
+    QString fileType = tmps[tmps.size() - 1];
+    QString pathSeg = path.mid(0, path.size()- fileType.size()-1) + QString("-seg.") + fileType;
+    return pathSeg;
+}
+
+/**
+ * \brief .
+ * 
+ * \param dir
+ * \return 
+ */
+const QString MainWidget::path2PathTran(const QString& dir)
+{
+    QStringList tmps = dir.split("/");
+    QString pathTrand;
+    for (QString tmp: tmps)
+    {
+        pathTrand += tmp + "\\";
+    }
+    return pathTrand;
 }
 
 /**
@@ -474,17 +497,34 @@ QString MainWidget::path2CloudName(const QString pathCloud)
  */
 void MainWidget::startSeg()
 {
-    // join QStringList to QString
-    QString pathAll;
+    QString pathRoomSegExe = this->path2PathTran(this->mDirCurrent) + "RoomSeg\\Main.exe";
+    std::cout << "path of room seg: " << pathRoomSegExe.toStdString() << std::endl;
+    QString pathPointCloudAll;
     for (int i = 0; i < this->mlPathCloudUnpro.size(); ++i)
     {
-        pathAll += this->mlPathCloudUnpro[i] + " ";
+        pathPointCloudAll += this->mlPathCloudUnpro[i] + " ";
     }
-    std::cout << "All path in one: " << pathAll.toStdString() << std::endl;
-    /*QString pathRoomSegExe = this->mDirCurrent+"\\RoomSeg\\Main.exe";
-    const wchar_t* pathExe = TEXT("");
-    ShellExecute(NULL, L"open", pathExe, NULL, NULL, SW_HIDE);*/
+    std::cout << "All path in one: " << pathPointCloudAll.toStdString() << std::endl;
+
+    // QString to const char*
+    std::string strExe = pathRoomSegExe.toStdString();
+    std::string strAll = pathPointCloudAll.toStdString();
+    
+    const char* pCPathExe = strExe.c_str();
+    const char* pCPathAll = strAll.c_str();
+    //第一次调用返回转换后的字符串长度，用于确认为wchar_t*开辟多大的内存空间
+    int numSizePathExe = MultiByteToWideChar(CP_OEMCP, 0, pCPathExe, strlen(pCPathExe) + 1, NULL, 0);
+    int numSizePathAll = MultiByteToWideChar(CP_OEMCP, 0, pCPathAll, strlen(pCPathAll) + 1, NULL, 0);
+    wchar_t* pWCPathExe = new wchar_t[numSizePathExe];
+    wchar_t* pWCPathAll = new wchar_t[numSizePathAll];
+
+    //第二次调用将单字节字符串转换成双字节字符串
+    MultiByteToWideChar(CP_OEMCP, 0, pCPathExe, strlen(pCPathExe) + 1, pWCPathExe, numSizePathExe);
+    MultiByteToWideChar(CP_OEMCP, 0, pCPathAll, strlen(pCPathAll) + 1, pWCPathAll, numSizePathAll);
+    //ShellExecute(NULL, L"open", pWCPathExe, pWCPathAll, NULL, SW_HIDE);
+    delete[] pWCPathExe, pWCPathAll;
 }
+
 /**
  * \brief Release memory in TreeWidget.
  * 
