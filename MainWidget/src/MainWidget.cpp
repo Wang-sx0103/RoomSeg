@@ -281,20 +281,25 @@ void MainWidget::initViewer(void)
     this->renderer = vtkSmartPointer<vtkRenderer>::New();
     // 初始化VTK渲染窗口
     this->renderWindow = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
-    // 添加渲染器至窗口
+    // 添加VTK渲染器至VTK渲染窗口
     this->renderWindow->AddRenderer(renderer);
-    // PCL画师初始化
+    // 利用VTK渲染器进行PCL画师初始化
     this->viewCloud.reset(new pcl::visualization::PCLVisualizer(renderer, renderWindow, "viewer", false));
 
     /* 2 信息传递 */
-    // 将PCL渲染器传递到VTK窗口中
+    // 将PCL中的VTK渲染窗口传递到QVTKOpenGLNativeWidget窗口中
     ui.qvtkWidget->setRenderWindow(this->viewCloud->getRenderWindow());
-    // 将VTK交互信息传递至PCL画师
+    // 将VTK交互信息与PCL画师绑定
     this->viewCloud->setupInteractor(ui.qvtkWidget->interactor(), ui.qvtkWidget->renderWindow());
 }
 
-// check if some file has in treewidget 
-bool MainWidget::inTreeWidget(QString& curPath)
+/**
+ * \brief check if some file has in treewidget.
+ * 
+ * \param curPath 
+ * \return 
+ */
+bool MainWidget::inTreeWidget(const QString& curPath)
 {
     for (QString projectCloud: this->mtreeWidget.keys())
     {
@@ -418,19 +423,20 @@ void MainWidget::updateShowCloud(const QString& pathCloud, const eShowStatus sta
     }
     else if (status == eShowStatus::Hide)
     {
-        // remove PointCloud from PCL
+        // remove PointCloud pointer from PCL
         this->viewCloud->removePointCloud(pathCloud.toStdString());
         this->viewCloud->resetCamera();
         this->viewCloud->getRenderWindow()->Render();
     }
     else
     {
+        // remove PointCloud pointer from PCL
         this->viewCloud->removePointCloud(pathCloud.toStdString());
         this->viewCloud->resetCamera();
         this->viewCloud->getRenderWindow()->Render();
 
         // delete Ptr from container
-
+        this->mmCloud.remove(pathCloud);
     }
 }
 
@@ -449,7 +455,7 @@ const QString MainWidget::path2ItemName(const QString& path)
 }
 
 /**
- * \brief .
+ * \brief Use the file name of the point cloud as the title.
  * 
  * \param pathCloud
  * \return 
@@ -461,9 +467,9 @@ const QString MainWidget::path2CloudName(const QString& pathCloud)
 }
 
 /**
- * \brief .
+ * \brief Segmented point cloud name.
  * 
- * \param path
+ * \param path 
  * \return 
  */
 const QString MainWidget::path2PathSeg(const QString& path)
@@ -475,7 +481,7 @@ const QString MainWidget::path2PathSeg(const QString& path)
 }
 
 /**
- * \brief .
+ * \brief paths differentiated by escape characters.
  * 
  * \param dir
  * \return 
@@ -495,7 +501,7 @@ const QString MainWidget::path2PathTran(const QString& dir)
  * \brief start semantic segmentation by shell.
  * 
  */
-void MainWidget::startSeg()
+void MainWidget::startSeg(void)
 {
     QString pathRoomSegExe = this->path2PathTran(this->mDirCurrent) + "RoomSeg\\Main.exe";
     std::cout << "path of room seg: " << pathRoomSegExe.toStdString() << std::endl;
@@ -512,13 +518,13 @@ void MainWidget::startSeg()
     
     const char* pCPathExe = strExe.c_str();
     const char* pCPathAll = strAll.c_str();
-    //第一次调用返回转换后的字符串长度，用于确认为wchar_t*开辟多大的内存空间
+    // 第一次调用返回转换后的字符串长度，用于确认为wchar_t*开辟多大的内存空间
     int numSizePathExe = MultiByteToWideChar(CP_OEMCP, 0, pCPathExe, strlen(pCPathExe) + 1, NULL, 0);
     int numSizePathAll = MultiByteToWideChar(CP_OEMCP, 0, pCPathAll, strlen(pCPathAll) + 1, NULL, 0);
     wchar_t* pWCPathExe = new wchar_t[numSizePathExe];
     wchar_t* pWCPathAll = new wchar_t[numSizePathAll];
 
-    //第二次调用将单字节字符串转换成双字节字符串
+    // 第二次调用将单字节字符串转换成双字节字符串
     MultiByteToWideChar(CP_OEMCP, 0, pCPathExe, strlen(pCPathExe) + 1, pWCPathExe, numSizePathExe);
     MultiByteToWideChar(CP_OEMCP, 0, pCPathAll, strlen(pCPathAll) + 1, pWCPathAll, numSizePathAll);
     //ShellExecute(NULL, L"open", pWCPathExe, pWCPathAll, NULL, SW_HIDE);
@@ -529,7 +535,7 @@ void MainWidget::startSeg()
  * \brief Release memory in TreeWidget.
  * 
  */
-void MainWidget::clearTreeWidget()
+void MainWidget::clearTreeWidget(void)
 {
     int numParentNode = ui.treeWidget->topLevelItemCount();
     while (numParentNode > 0)
@@ -546,7 +552,8 @@ void MainWidget::clearTreeWidget()
 }
 
 /**
- * \brief .
+ * \brief Splice the FIELDS section into a string,
+ * located in the table header section of the PCD file.
  * 
  * \param field
  * \return 

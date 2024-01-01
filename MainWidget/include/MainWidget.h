@@ -56,11 +56,11 @@ private:
     const QString path2CloudName(const QString&);
     const QString path2PathSeg(const QString&);
     const QString path2PathTran(const QString&);
-    void startSeg();
-    bool inTreeWidget(QString&);
+    void startSeg(void);
+    bool inTreeWidget(const QString&);
     void updateShowCloud(const QString&, const eShowStatus);
     //void updateTreeWidget();
-    void clearTreeWidget();
+    void clearTreeWidget(void);
     // get point cloud field info
     const std::string getFieldType(const std::vector<pcl::PCLPointField>&);
 
