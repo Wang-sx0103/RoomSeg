@@ -42,7 +42,7 @@
     <QtBuildConfig>debug</QtBuildConfig>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
-    <QtInstall>6.5.3_msvc2019_64</QtInstall>
+    <QtInstall>6.6.1_msvc2019_64</QtInstall>
     <QtModules>core;gui;widgets;openglwidgets</QtModules>
     <QtBuildConfig>release</QtBuildConfig>
   </PropertyGroup>
@@ -65,6 +65,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <IncludePath>E:\DevLibs\VTK\VTK-9.2.6\MSVC\include\vtk-9.2;E:\DevLibs\PCL\pcl-1.13.1\MSVC\include\pcl-1.13;E:\DevLibs\Boost\Boost-1.83\MSVC\include\boost-1_83;E:\DevLibs\Eigen\Eigen-3.4.0\include\eigen3;E:\DevLibs\FLANN\FLANN-1.9.1\MSVC\include;E:\DevLibs\QHull\qhull-8.1\MSVC\include;$(ProjectDir)\include;$(IncludePath)</IncludePath>
     <LibraryPath>E:\DevLibs\Boost\Boost-1.83\MSVC\lib;E:\DevLibs\FLANN\FLANN-1.9.1\MSVC\lib;E:\DevLibs\QHull\qhull-8.1\MSVC\lib;E:\DevLibs\VTK\VTK-9.2.6\MSVC\lib;E:\DevLibs\PCL\pcl-1.13.1\MSVC\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>true</VcpkgEnableManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Link>
