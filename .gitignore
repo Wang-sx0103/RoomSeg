@@ -364,3 +364,6 @@ FodyWeavers.xsd
 
 # hint file
 *.hint
+
+# vcpkg
+vcpkg_installed/
